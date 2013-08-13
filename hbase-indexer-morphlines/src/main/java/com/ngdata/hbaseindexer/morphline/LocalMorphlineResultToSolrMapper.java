@@ -15,6 +15,8 @@
  */
 package com.ngdata.hbaseindexer.morphline;
 
+import static com.ngdata.sep.impl.HBaseShims.newGet;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,9 +121,20 @@ final class LocalMorphlineResultToSolrMapper implements ResultToSolrMapper, Conf
 
     @Override
     public void configure(Map<String, String> params) {
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("CWD is {}", new File(".").getAbsolutePath());
-            LOG.trace("Configuration:\n{}", Joiner.on("\n").join(new TreeMap(params).entrySet()));
+    Config override = ConfigFactory.parseMap(morphlineVariables);
+    this.morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, collector, override);
+    this.morphlineFileAndId = morphlineFile + "@" + morphlineId;
+
+    // precompute familyMap; see DefaultResultToSolrMapper ctor
+    Get get = newGet();
+    for (ByteArrayExtractor extractor : morphlineContext.getExtractors()) {
+      byte[] columnFamily = extractor.getColumnFamily();
+      byte[] columnQualifier = extractor.getColumnQualifier();
+      if (columnFamily != null) {
+        if (columnQualifier != null) {
+          get.addColumn(columnFamily, columnQualifier);
+        } else {
+          get.addFamily(columnFamily);
         }
 
         FaultTolerance faultTolerance = new FaultTolerance(getBooleanParameter(FaultTolerance.IS_PRODUCTION_MODE,
