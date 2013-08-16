@@ -119,8 +119,36 @@ final class LocalMorphlineResultToSolrMapper implements ResultToSolrMapper, Conf
     public LocalMorphlineResultToSolrMapper() {
     }
 
-    @Override
-    public void configure(Map<String, String> params) {
+ @Override
+  public void configure(Map<String, String> params) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("CWD is {}", new File(".").getAbsolutePath());
+      LOG.trace("Configuration:\n{}", Joiner.on("\n").join(new TreeMap(params).entrySet()));
+    }
+    
+    FaultTolerance faultTolerance = new FaultTolerance(
+      getBooleanParameter(FaultTolerance.IS_PRODUCTION_MODE, false, params), 
+      getBooleanParameter(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false, params),
+      getStringParameter(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES, SolrServerException.class.getName(), params)        
+      );
+    
+    this.morphlineContext = (HBaseMorphlineContext) new HBaseMorphlineContext.Builder()
+      .setExceptionHandler(faultTolerance)
+      .setMetricRegistry(new MetricRegistry())
+      .build();
+
+    String morphlineFile = params.get(MORPHLINE_FILE_PARAM);
+    String morphlineId = params.get(MORPHLINE_ID_PARAM);
+    if (morphlineFile == null || morphlineFile.trim().length() == 0) {
+      throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
+    }
+    Map morphlineVariables = new HashMap();
+    for (Map.Entry<String, String> entry : params.entrySet()) {
+      String variablePrefix = MORPHLINE_VARIABLE_PARAM + ".";
+      if (entry.getKey().startsWith(variablePrefix)) {
+        morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
+      }
+    }
     Config override = ConfigFactory.parseMap(morphlineVariables);
     this.morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, collector, override);
     this.morphlineFileAndId = morphlineFile + "@" + morphlineId;
@@ -136,54 +164,17 @@ final class LocalMorphlineResultToSolrMapper implements ResultToSolrMapper, Conf
         } else {
           get.addFamily(columnFamily);
         }
-
-        FaultTolerance faultTolerance = new FaultTolerance(getBooleanParameter(FaultTolerance.IS_PRODUCTION_MODE,
-                false, params), getBooleanParameter(FaultTolerance.IS_IGNORING_RECOVERABLE_EXCEPTIONS, false, params),
-                getStringParameter(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES, SolrServerException.class.getName(),
-                        params));
-
-        this.morphlineContext = (HBaseMorphlineContext)new HBaseMorphlineContext.Builder().setExceptionHandler(
-                faultTolerance).setMetricRegistry(new MetricRegistry()).build();
-
-        String morphlineFile = params.get(MORPHLINE_FILE_PARAM);
-        String morphlineId = params.get(MORPHLINE_ID_PARAM);
-        if (morphlineFile == null || morphlineFile.trim().length() == 0) {
-            throw new MorphlineCompilationException("Missing parameter: " + MORPHLINE_FILE_PARAM, null);
-        }
-        Map morphlineVariables = new HashMap();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            String variablePrefix = MORPHLINE_VARIABLE_PARAM + ".";
-            if (entry.getKey().startsWith(variablePrefix)) {
-                morphlineVariables.put(entry.getKey().substring(variablePrefix.length()), entry.getValue());
-            }
-        }
-        Config override = ConfigFactory.parseMap(morphlineVariables);
-        this.morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, collector,
-                override);
-        this.morphlineFileAndId = morphlineFile + "@" + morphlineId;
-
-        // precompute familyMap; see DefaultResultToSolrMapper ctor
-        Get get = new Get();
-        for (ByteArrayExtractor extractor : morphlineContext.getExtractors()) {
-            byte[] columnFamily = extractor.getColumnFamily();
-            byte[] columnQualifier = extractor.getColumnQualifier();
-            if (columnFamily != null) {
-                if (columnQualifier != null) {
-                    get.addColumn(columnFamily, columnQualifier);
-                } else {
-                    get.addFamily(columnFamily);
-                }
-            }
-        }
-        this.familyMap = get.getFamilyMap();
-
-        this.isSafeMode = getBooleanParameter("isSafeMode", false, params); // intentionally undocumented, not a public
-                                                                            // API
-
-        String metricName = MetricRegistry.name(getClass(), "HBase Result to Solr mapping time");
-        this.mappingTimer = morphlineContext.getMetricRegistry().timer(metricName);
-        Notifications.notifyBeginTransaction(morphline);
+      }
     }
+    this.familyMap = get.getFamilyMap();
+    
+    this.isSafeMode = getBooleanParameter("isSafeMode", false, params); // intentionally undocumented, not a public API
+    
+    String metricName = MetricRegistry.name(getClass(), "HBase Result to Solr mapping time");
+    this.mappingTimer = morphlineContext.getMetricRegistry().timer(metricName);
+    Notifications.notifyBeginTransaction(morphline);      
+  }
+
 
     @Override
     public boolean containsRequiredData(Result result) {
