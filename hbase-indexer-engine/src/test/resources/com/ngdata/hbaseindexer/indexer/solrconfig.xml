@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- This is a minimal solrconfig.xml. -->
 <config>
-  <luceneMatchVersion>LUCENE_40</luceneMatchVersion>
+  <luceneMatchVersion>${tests.luceneMatchVersion:LATEST}</luceneMatchVersion>
   <dataDir>${solr.data.dir:}</dataDir>
 
   <directoryFactory name="DirectoryFactory"
@@ -66,6 +66,7 @@
     </lst>
   </requestHandler>
 
+  <!--
   <requestHandler name="/get" class="solr.RealTimeGetHandler">
     <lst name="defaults">
       <str name="omitHeader">true</str>
@@ -74,8 +75,10 @@
 
   <requestHandler name="/update" class="solr.UpdateRequestHandler">
   </requestHandler>
+  -->
 
   <!-- required for SolrCloud -->
+  <!--
   <requestHandler name="/replication" class="solr.ReplicationHandler" startup="lazy" />
 
   <requestHandler name="/admin/" class="solr.admin.AdminHandlers"/>
@@ -99,5 +102,6 @@
   <admin>
     <defaultQuery>*:*</defaultQuery>
   </admin>
+  -->
 
 </config>

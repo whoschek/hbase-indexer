@@ -139,7 +139,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Xmx512m -XX:MaxDirectMemorySize=256m -XX:MaxPermSize=128M</argLine>
+          <argLine>-Xmx2512m -XX:MaxDirectMemorySize=756m -XX:MaxPermSize=728M</argLine>
           <environmentVariables>
             <MALLOC_ARENA_MAX>4</MALLOC_ARENA_MAX>
           </environmentVariables>

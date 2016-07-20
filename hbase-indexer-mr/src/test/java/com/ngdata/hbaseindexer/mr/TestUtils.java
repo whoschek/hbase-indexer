@@ -63,7 +63,7 @@ public class TestUtils {
           long numDocs = resp.getResults().getNumFound();
           actualDocs += numDocs;
         } finally {
-          solr.shutdown();
+          solr.close();
         }
       }
     }

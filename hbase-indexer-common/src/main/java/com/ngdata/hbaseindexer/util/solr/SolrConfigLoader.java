@@ -53,7 +53,7 @@ public class SolrConfigLoader extends SolrResourceLoader {
      * Instantiate with the name of the configuration directory and the ZooKeeper used to access it.
      */
     public SolrConfigLoader(String collection, ZooKeeper zooKeeper) {
-        super("solr");
+        super();
         this.zk = zooKeeper;
         this.configZkPath = getCollectionConfigPath(collection);
     }

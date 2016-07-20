@@ -194,7 +194,11 @@ public class DirectSolrClassicInputDocumentWriter implements SolrInputDocumentWr
     @Override
     public void close() {
         for (SolrClient server : solrServers) {
-            server.shutdown();
+            try {
+                server.close();
+            } catch (java.io.IOException e) {
+               throw new RuntimeException(e);
+            }
         }
     }
 

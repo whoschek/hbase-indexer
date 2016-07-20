@@ -131,10 +131,10 @@ public class IndexerIT {
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         if (collection1 != null) {
-            collection1.shutdown();
+            collection1.close();
         }
         if (collection2 != null) {
-            collection2.shutdown();
+            collection2.close();
         }
 
         //  Stop Solr first, as it depends on ZooKeeper
