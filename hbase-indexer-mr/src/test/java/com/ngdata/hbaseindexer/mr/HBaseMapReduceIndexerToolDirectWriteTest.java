@@ -47,7 +47,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -59,7 +58,6 @@ import java.util.Map.Entry;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class HBaseMapReduceIndexerToolDirectWriteTest {
 
     private static final byte[] TEST_TABLE_NAME = Bytes.toBytes("record");

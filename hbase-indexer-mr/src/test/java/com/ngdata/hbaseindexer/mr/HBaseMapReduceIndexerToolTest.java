@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+@Ignore
 public class HBaseMapReduceIndexerToolTest {
 
     private static final byte[] TEST_TABLE_NAME = Bytes.toBytes("record");
@@ -142,7 +143,6 @@ public class HBaseMapReduceIndexerToolTest {
     }
     
     @Test
-    @Ignore
     public void testIndexer_Morphlines() throws Exception {
         
         FileSystem fs = FileSystem.get(HBASE_TEST_UTILITY.getConfiguration());
