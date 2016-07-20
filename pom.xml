@@ -70,7 +70,7 @@
     <module>hbase-indexer-morphlines</module>
     <module>hbase-indexer-demo</module>
     <module>hbase-sep</module>
-    <!--<module>hbase-indexer-mr</module>-->
+    <module>hbase-indexer-mr</module>
     <module>hbase-indexer-dist</module>
   </modules>
 
