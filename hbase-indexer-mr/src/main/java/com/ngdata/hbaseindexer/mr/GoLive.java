@@ -91,7 +91,7 @@ class GoLive {
             public Request call() {
               Request req = new Request();
               LOG.info("Live merge " + dir.getPath() + " into " + mergeUrl);
-              final HttpSolrClient server = new HttpSolrClient(mergeUrl);
+              final HttpSolrClient server = new HttpSolrClient.Builder(mergeUrl).build();
               try {
                 CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
                 mergeRequest.setCoreName(name);
@@ -153,7 +153,7 @@ class GoLive {
       try {
         LOG.info("Committing live merge...");
         if (options.zkHost != null) {
-          CloudSolrClient server = new CloudSolrClient(options.zkHost);
+          CloudSolrClient server = new CloudSolrClient.Builder().withZkHost(options.zkHost).build();
           server.setDefaultCollection(options.collection);
           server.commit();
           server.close();
@@ -161,7 +161,7 @@ class GoLive {
           for (List<String> urls : options.shardUrls) {
             for (String url : urls) {
               // TODO: we should do these concurrently
-              HttpSolrClient server = new HttpSolrClient(url);
+              HttpSolrClient server = new HttpSolrClient.Builder(url).build();
               server.commit();
               server.close();
             }
