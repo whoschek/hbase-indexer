@@ -254,7 +254,7 @@ public class HBaseMapReduceIndexerToolDirectWriteTest {
                                 "firstname", "John",
                                 "lastname", "Doe"));
         
-        indexerToolConf.set("morphlineField.forcedMoo", "forcedBaz");
+//        indexerToolConf.set("morphlineField.forcedMoo", "forcedBaz");
         indexerToolConf.set("morphlineVariable.myFoo", "myBar");
         File indexerConfigFile = MRTestUtil.substituteZkHost(
             new File("target/test-classes/morphline_indexer.xml"), SOLR_TEST_UTILITY.getZkConnectString());
@@ -276,7 +276,7 @@ public class HBaseMapReduceIndexerToolDirectWriteTest {
                                 "firstname", "John",
                                 "lastname", "Doe"));
         
-        indexerToolConf.set("morphlineField.forcedMoo", "forcedBaz");
+//        indexerToolConf.set("morphlineField.forcedMoo", "forcedBaz");
         indexerToolConf.set("morphlineVariable.myFoo", "myBar");
         File indexerConfigFile = MRTestUtil.substituteZkHost(
             new File("target/test-classes/morphline_indexer.xml"), SOLR_TEST_UTILITY.getZkConnectString());
