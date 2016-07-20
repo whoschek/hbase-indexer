@@ -28,7 +28,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-@Ignore
 public class HBaseMapReduceIndexerToolTest {
 
     private static final byte[] TEST_TABLE_NAME = Bytes.toBytes("record");
