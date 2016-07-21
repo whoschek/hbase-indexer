@@ -44,7 +44,7 @@ public class HBaseMapReduceIndexerToolTest {
     private static MRTestUtil MR_TEST_UTIL;
     
     private static final String RESOURCES_DIR = "target/test-classes";
-    private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr/conf");
+    private static final File MINIMR_CONF_DIR = new File(RESOURCES_DIR + "/solr/minimr");
     
     private static final int RECORD_COUNT = 2000;
     
