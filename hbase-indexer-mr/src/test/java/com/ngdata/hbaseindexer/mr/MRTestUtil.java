@@ -48,7 +48,7 @@ class MRTestUtil {
     public void startMrCluster() throws Exception {
         MiniMRCluster mrCluster = hbaseTestUtil.startMiniMapReduceCluster();
         Configuration conf = hbaseTestUtil.getConfiguration();
-        conf.set("mapred.job.tracker", mrCluster.createJobConf().get("mapred.job.tracker"));
+        conf.addResource(mrCluster.createJobConf());
     }
     
     public static File substituteZkHost(File file, String zkConnectString) throws IOException {
