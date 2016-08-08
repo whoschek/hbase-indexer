@@ -110,6 +110,7 @@ public class HBaseMapReduceIndexerToolTest {
             "--solr-home-dir", MINIMR_CONF_DIR.toString(),
             "--output-dir", fs.makeQualified(new Path("/solroutput")).toString(),
             "--shards", "1",
+            "--verbose",
             "--overwrite-output-dir");
         
         TestUtils.validateSolrServerDocumentCount(
