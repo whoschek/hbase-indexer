@@ -350,7 +350,7 @@ public class HBaseMapReduceIndexerTool extends Configured implements Tool {
             throws IOException, InterruptedException, ClassNotFoundException {
 
         LOG.debug("Running job: " + getJobInfo(job));
-        boolean success = job.waitForCompletion(isVerbose);
+        boolean success = job.monitorAndPrintJob();
         if (!success) {
             LOG.error("Job failed! " + getJobInfo(job));
         }
