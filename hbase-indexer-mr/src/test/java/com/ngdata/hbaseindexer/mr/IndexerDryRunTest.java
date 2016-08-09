@@ -97,9 +97,8 @@ public class IndexerDryRunTest {
         
         recordTable = new HTable(HBASE_TEST_UTILITY.getConfiguration(), TEST_TABLE_NAME);
         
-        int zkPort = HBASE_TEST_UTILITY.getZkCluster().getClientPort();
         opts = new HBaseIndexingOptions(new Configuration());
-        opts.zkHost = "127.0.0.1:" + zkPort + "/solr";
+        opts.zkHost = SOLR_TEST_UTILITY.getZkConnectString();
         opts.hbaseTableName = Bytes.toString(TEST_TABLE_NAME);
         opts.hbaseIndexerConfigFile = new File(Resources.getResource(getClass(), "user_indexer.xml").toURI());
         opts.collection = "collection1";
