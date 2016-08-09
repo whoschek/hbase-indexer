@@ -17,6 +17,9 @@
 package com.ngdata.hbaseindexer.mr;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
@@ -54,7 +57,7 @@ public class TestUtils {
       if (dir.getPath().getName().startsWith("part") && dir.isDirectory()) {
         actualShards++;
         EmbeddedSolrServer solr = createEmbeddedSolrServer(
-            new Path(solrHomeDir.getAbsolutePath()), fs, dir.getPath());
+            solrHomeDir, fs, dir.getPath());
         
         try {
           SolrQuery query = new SolrQuery();
@@ -71,10 +74,23 @@ public class TestUtils {
     assertEquals(expectedDocs, actualDocs);
   }
 
-  public static EmbeddedSolrServer createEmbeddedSolrServer(Path solrHomeDir, FileSystem fs, Path outputShardDir)
+  private static EmbeddedSolrServer createEmbeddedSolrServer(File solrHomeDir, FileSystem fs, Path outputShardDir)
           throws IOException {
 
     LOG.info("Creating embedded Solr server with solrHomeDir: " + solrHomeDir + ", fs: " + fs + ", outputShardDir: " + outputShardDir);
+
+    // copy solrHomeDir to ensure it isn't modified across multiple unit tests or multiple EmbeddedSolrServer instances.
+    // also make conf/ dir a subdir of core1/ dir to make Solr-6 happy.
+    File tmpDir = Files.createTempDir();
+    tmpDir.deleteOnExit();
+    FileUtils.copyDirectory(
+        solrHomeDir, 
+        new File(tmpDir, "core1"));
+    File solrXmlSrc = new File(solrHomeDir, "solr.xml");
+    if (solrXmlSrc.exists()) {
+      FileUtils.copyFile(solrXmlSrc, new File(tmpDir, solrXmlSrc.getName()));
+    }
+    solrHomeDir = tmpDir;
 
     Path solrDataDir = new Path(outputShardDir, "data");
 
@@ -85,7 +101,7 @@ public class TestUtils {
     LOG.info(String
             .format(Locale.ENGLISH,
                     "Constructed instance information solr.home %s (%s), instance dir %s, conf dir %s, writing index to solr.data.dir %s, with permdir %s",
-                    solrHomeDir, solrHomeDir.toUri(), loader.getInstancePath(),
+                    solrHomeDir, solrHomeDir.toURI(), loader.getInstancePath(),
                     loader.getConfigDir(), dataDirStr, outputShardDir));
 
     // TODO: This is fragile and should be well documented

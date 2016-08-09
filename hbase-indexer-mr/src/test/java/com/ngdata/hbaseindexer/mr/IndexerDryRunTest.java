@@ -70,13 +70,13 @@ public class IndexerDryRunTest {
         
         SOLR_TEST_UTILITY = new SolrTestingUtility(zkClientPort, NetUtils.getFreePort());
         SOLR_TEST_UTILITY.start();
-        SOLR_TEST_UTILITY.uploadConfig("config1",
+        SOLR_TEST_UTILITY.uploadConfig("config13",
                 Resources.toByteArray(Resources.getResource(HBaseMapReduceIndexerToolDirectWriteTest.class, "schema.xml")),
                 Resources.toByteArray(Resources.getResource(HBaseMapReduceIndexerToolDirectWriteTest.class, "solrconfig.xml")));
-        SOLR_TEST_UTILITY.createCore("collection1_core1", "collection1", "config1", 1);
+        SOLR_TEST_UTILITY.createCore("collection1_core13", "collection13", "config13", 1);
 
         COLLECTION = new CloudSolrClient(SOLR_TEST_UTILITY.getZkConnectString());
-        COLLECTION.setDefaultCollection("collection1");
+        COLLECTION.setDefaultCollection("collection13");
         
         HBASE_ADMIN = new HBaseAdmin(HBASE_TEST_UTILITY.getConfiguration());
 
@@ -102,7 +102,7 @@ public class IndexerDryRunTest {
         opts.zkHost = "127.0.0.1:" + zkPort + "/solr";
         opts.hbaseTableName = Bytes.toString(TEST_TABLE_NAME);
         opts.hbaseIndexerConfigFile = new File(Resources.getResource(getClass(), "user_indexer.xml").toURI());
-        opts.collection = "collection1";
+        opts.collection = "collection13";
         opts.shards = 1;
         opts.reducers = 1;
         opts.fanout = Integer.MAX_VALUE;
