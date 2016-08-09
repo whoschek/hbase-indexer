@@ -138,6 +138,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>${version.surefire.plugin}</version>
         <configuration>
           <reuseForks>false</reuseForks>
           <argLine>-Xmx2512m -XX:MaxDirectMemorySize=756m -XX:MaxPermSize=728M</argLine>
