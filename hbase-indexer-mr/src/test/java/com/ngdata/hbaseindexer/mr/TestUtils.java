@@ -79,17 +79,10 @@ public class TestUtils {
 
     LOG.info("Creating embedded Solr server with solrHomeDir: " + solrHomeDir + ", fs: " + fs + ", outputShardDir: " + outputShardDir);
 
-    // copy solrHomeDir to ensure it isn't modified across multiple unit tests or multiple EmbeddedSolrServer instances.
-    // also make conf/ dir a subdir of core1/ dir to make Solr-6 happy.
+    // copy solrHomeDir to ensure it isn't modified across multiple unit tests or multiple EmbeddedSolrServer instances
     File tmpDir = Files.createTempDir();
     tmpDir.deleteOnExit();
-    FileUtils.copyDirectory(
-        solrHomeDir, 
-        new File(tmpDir, "core1"));
-    File solrXmlSrc = new File(solrHomeDir, "solr.xml");
-    if (solrXmlSrc.exists()) {
-      FileUtils.copyFile(solrXmlSrc, new File(tmpDir, solrXmlSrc.getName()));
-    }
+    FileUtils.copyDirectory(solrHomeDir, tmpDir);
     solrHomeDir = tmpDir;
 
     Path solrDataDir = new Path(outputShardDir, "data");
@@ -115,7 +108,7 @@ public class TestUtils {
     CoreContainer container = new CoreContainer(loader);
     container.load();
 
-    SolrCore core = container.create("core1", ImmutableMap.of(CoreDescriptor.CORE_DATADIR, dataDirStr));
+    SolrCore core = container.create("core1", Paths.get(solrHomeDir.toString()), ImmutableMap.of(CoreDescriptor.CORE_DATADIR, dataDirStr));
 
     if (!(core.getDirectoryFactory() instanceof HdfsDirectoryFactory)) {
       throw new UnsupportedOperationException(

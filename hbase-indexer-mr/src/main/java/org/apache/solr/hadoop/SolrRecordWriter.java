@@ -1,3 +1,5 @@
+// This class is a work-around for a bug in solr-6.1 - it overrides Solr's standard SolrRecordWriter class with a fixed createEmbeddedSolrServer() method. 
+// This work-around can probably be removed once solr-6.2 ships.
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -31,7 +33,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -59,7 +60,7 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   public final static List<String> allowedConfigDirectories = new ArrayList<>(
-      Arrays.asList(new String[] { "conf", "lib", "solr.xml" }));
+      Arrays.asList(new String[] { "conf", "lib", "solr.xml", "core1" }));
 
   public final static Set<String> requiredConfigDirectories = new HashSet<>();
   
@@ -140,17 +141,19 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
   public static EmbeddedSolrServer createEmbeddedSolrServer(Path solrHomeDir, FileSystem fs, Path outputShardDir)
       throws IOException {
 
-    LOG.info("CCCreating embedded Solr server with solrHomeDir: " + solrHomeDir + ", fs: " + fs + ", outputShardDir: " + outputShardDir);
-    File tmpDir = Files.createTempDir();
-    tmpDir.deleteOnExit();
-    FileUtils.copyDirectory(
-        new File(solrHomeDir.toString()), 
-        new File(tmpDir, "core1"));
-    File solrXmlSrc = new File(solrHomeDir.toString() + "/solr.xml");
-    if (solrXmlSrc.exists()) {
-      FileUtils.copyFile(solrXmlSrc, new File(tmpDir, solrXmlSrc.getName()));
+    LOG.info("Creating embedded Solr server with solrHomeDir: " + solrHomeDir + ", fs: " + fs + ", outputShardDir: " + outputShardDir);
+    
+    LOG.info("Using custom SolrRecordWriter class for HBaseMapReduceIndexer");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Listing files contained in solrHomeDir {} ...", solrHomeDir);
+      int i = 0;
+      for (File file : FileUtils.listFiles(new File(solrHomeDir.toString()), null, true)) {
+        // strip off common path prefix for better human readability
+        String relPath = file.toString();
+        relPath = relPath.substring(solrHomeDir.toString().length() + 1, relPath.length());
+        LOG.debug("solrHomeDirFile[{}]: {}", i++, relPath);
+      }
     }
-    solrHomeDir = new Path(tmpDir.toString());
 
     Path solrDataDir = new Path(outputShardDir, "data");
 
@@ -175,7 +178,8 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     CoreContainer container = new CoreContainer(loader);
     container.load();
 
-    SolrCore core = container.create("core1", ImmutableMap.of(CoreDescriptor.CORE_DATADIR, dataDirStr));
+    SolrCore core = container.create("core1", Paths.get(solrHomeDir.toString()), ImmutableMap.of(CoreDescriptor.CORE_DATADIR, dataDirStr));
+//    SolrCore core = container.create("", ImmutableMap.of(CoreDescriptor.CORE_DATADIR, dataDirStr));
     
     if (!(core.getDirectoryFactory() instanceof HdfsDirectoryFactory)) {
       throw new UnsupportedOperationException(
@@ -184,6 +188,7 @@ class SolrRecordWriter<K, V> extends RecordWriter<K, V> {
     }
 
     EmbeddedSolrServer solr = new EmbeddedSolrServer(container, "core1");
+//    EmbeddedSolrServer solr = new EmbeddedSolrServer(container, "");
     return solr;
   }
 
