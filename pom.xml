@@ -28,7 +28,7 @@
     <version.zookeeper>3.4.5</version.zookeeper>
     <version.jackson>1.9.13</version.jackson>
     <version.httpclient>4.3</version.httpclient>
-    <version.kite>1.1.0</version.kite>
+    <version.kite>0.13.0</version.kite>
     <version.jersey>1.17</version.jersey>
     
     <version.surefire.plugin>2.19.1</version.surefire.plugin>
