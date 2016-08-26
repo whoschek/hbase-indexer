@@ -25,11 +25,11 @@
     <version.slf4j>1.7.5</version.slf4j>
     <version.hbase>1.1.0</version.hbase>
     <version.hadoop>2.7.1</version.hadoop>
-    <version.zookeeper>3.4.6</version.zookeeper>
+    <version.zookeeper>3.4.5</version.zookeeper>
     <version.jackson>1.9.13</version.jackson>
-    <version.httpclient>4.4.1</version.httpclient>
+    <version.httpclient>4.3</version.httpclient>
     <version.kite>0.13.0</version.kite>
-    <version.jersey>1.19</version.jersey>
+    <version.jersey>1.17</version.jersey>
     
     <version.surefire.plugin>2.19.1</version.surefire.plugin>
     <version.failsafe.plugin>${version.surefire.plugin}</version.failsafe.plugin>
