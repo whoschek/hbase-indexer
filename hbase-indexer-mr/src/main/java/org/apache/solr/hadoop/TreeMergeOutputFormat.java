@@ -74,6 +74,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
     private static final Logger LOG = log;
 
     public TreeMergeRecordWriter(TaskAttemptContext context, Path workDir) {
+      LOG.info("Using custom TreeMergeRecordWriter class for HBaseMapReduceIndexer");
       this.workDir = new Path(workDir, "data/index");
       this.heartBeater = new HeartBeater(context);
       this.context = context;
@@ -98,6 +99,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
       heartBeater.needHeartBeat();
       try {
         Directory mergedIndex = new HdfsDirectory(workDir, NoLockFactory.INSTANCE, context.getConfiguration(), HdfsDirectory.DEFAULT_BUFFER_SIZE);
+//        Directory mergedIndex = new HdfsDirectory(workDir, context.getConfiguration());
         
         // TODO: shouldn't we pull the Version from the solrconfig.xml?
         IndexWriterConfig writerConfig = new IndexWriterConfig(null)
@@ -132,6 +134,7 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         Directory[] indexes = new Directory[shards.size()];
         for (int i = 0; i < shards.size(); i++) {
           indexes[i] = new HdfsDirectory(shards.get(i), NoLockFactory.INSTANCE, context.getConfiguration(), HdfsDirectory.DEFAULT_BUFFER_SIZE);
+//          indexes[i] = new HdfsDirectory(shards.get(i), context.getConfiguration());
         }
 
         context.setStatus("Logically merging " + shards.size() + " shards into one shard");
@@ -167,6 +170,9 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
         LOG.info("Optimizing Solr: Closing index writer");
         writer.close();
         LOG.info("Optimizing Solr: Done closing index writer in {}ms", timer.getTime());
+//        for (Directory index : indexes) { 
+//          index.close(); 
+//        } 
         context.setStatus("Done");
       } finally {
         heartBeater.cancelHeartBeat();
