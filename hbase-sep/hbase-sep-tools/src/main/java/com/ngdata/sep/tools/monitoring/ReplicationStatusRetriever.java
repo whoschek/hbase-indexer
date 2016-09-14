@@ -29,7 +29,6 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
-import org.apache.hadoop.hbase.wal.DefaultWALProvider;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -49,6 +48,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
@@ -302,7 +302,7 @@ public class ReplicationStatusRetriever {
      * @param hlogName name of HLog
      */
     private long getLogFileSize(String serverName, String hlogName) throws IOException {
-        Path hbaseLogDir = new Path(hbaseRootDir, DefaultWALProvider.getWALDirectoryName(serverName));
+        Path hbaseLogDir = new Path(hbaseRootDir, getWALDirectoryName(serverName));
         Path path = new Path(hbaseLogDir, hlogName);
         try {
             FileStatus status = fileSystem.getFileStatus(path);
@@ -316,6 +316,27 @@ public class ReplicationStatusRetriever {
                 System.err.println("HLog not found at : " + path + " or " + oldLogPath);
                 return -1;
             }
+        }
+    }
+    
+    private String getWALDirectoryName(String serverName) {
+        //return org.apache.hadoop.hbase.wal.FSHLogProvider.getWALDirectoryName(serverName); // hbase-1.x
+        //return org.apache.hadoop.hbase.wal.DefaultWALProvider.getWALDirectoryName(serverName); // hbase-2.x
+        Class clazz = null;
+        try {
+            try {
+                clazz = Class.forName("org.apache.hadoop.hbase.wal.FSHLogProvider"); // hbase-2.x
+            } catch (ClassNotFoundException e) {
+                clazz = Class.forName("org.apache.hadoop.hbase.wal.DefaultWALProvider"); // hbase-1.x        
+            }
+            Method method = clazz.getMethod("getWALDirectoryName", String.class);
+            if (!Modifier.isStatic(method.getModifiers())) {
+                throw new IllegalStateException("Incompatible class: " + clazz);
+            }
+            String walDirName = (String) method.invoke(null, serverName);
+            return walDirName;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

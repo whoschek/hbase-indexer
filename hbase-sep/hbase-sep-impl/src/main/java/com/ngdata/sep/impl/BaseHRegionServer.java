@@ -49,11 +49,6 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
 
     @Override
-    public AdminProtos.WarmupRegionResponse warmupRegion(RpcController rpcController, AdminProtos.WarmupRegionRequest warmupRegionRequest) throws ServiceException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public AdminProtos.CloseRegionResponse closeRegion(RpcController rpcController, AdminProtos.CloseRegionRequest closeRegionRequest) throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
@@ -153,7 +148,7 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
 
     @Override
-    public int getPriority(org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader header, com.google.protobuf.Message param) {
+    public int getPriority(org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader header, com.google.protobuf.Message param, org.apache.hadoop.hbase.security.User user) {
         return org.apache.hadoop.hbase.HConstants.NORMAL_QOS;
     }
 
@@ -167,6 +162,11 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
         throw new UnsupportedOperationException("Not implemented");
     }
 
+    @Override
+    public org.apache.hadoop.hbase.client.ClusterConnection getClusterConnection() {
+       throw new UnsupportedOperationException("Not implemented");
+    }
+    
     @Override
     public org.apache.hadoop.hbase.zookeeper.MetaTableLocator getMetaTableLocator() {
         throw new UnsupportedOperationException("Not implemented");
@@ -189,5 +189,12 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
             throws com.google.protobuf.ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
-
+  
+    @Override
+    public org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WarmupRegionResponse warmupRegion(
+            com.google.protobuf.RpcController controller,
+            org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WarmupRegionRequest request)
+            throws com.google.protobuf.ServiceException {
+       throw new UnsupportedOperationException("Not implemented");
+    }
 }

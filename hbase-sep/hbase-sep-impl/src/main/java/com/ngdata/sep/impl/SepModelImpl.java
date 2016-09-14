@@ -88,7 +88,7 @@ public class SepModelImpl implements SepModel {
 
 
             try {
-                replicationAdmin.addPeer(internalName, zkQuorumString + ":" + zkClientPort + ":" + basePath);
+                replicationAdmin.addPeer(internalName, new ReplicationPeerConfig().setClusterKey(zkQuorumString + ":" + zkClientPort + ":" + basePath));
             } catch (IllegalArgumentException e) {
                 if (e.getMessage().equals("Cannot add existing peer")) {
                     return false;
