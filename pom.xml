@@ -30,6 +30,8 @@
     <version.httpclient>4.3</version.httpclient>
     <version.kite>0.13.0</version.kite>
     <version.jersey>1.17</version.jersey>
+    <version.netty>4.1.1.Final</version.netty>
+    <version.netty.hadoop>3.6.6.Final</version.netty.hadoop>
     
     <version.surefire.plugin>2.19.1</version.surefire.plugin>
     <version.failsafe.plugin>${version.surefire.plugin}</version.failsafe.plugin>
@@ -543,6 +545,21 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${version.guava}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${version.guava}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
+        <version>${version.netty}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty</artifactId>
+        <version>${version.netty.hadoop}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
