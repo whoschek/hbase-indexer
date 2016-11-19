@@ -15,12 +15,12 @@
  */
 package com.ngdata.sep.impl;
 
-import com.google.protobuf.RpcController;
-import com.google.protobuf.ServiceException;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcController;
+import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 
 /**
@@ -148,12 +148,12 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
 
     @Override
-    public int getPriority(org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader header, com.google.protobuf.Message param, org.apache.hadoop.hbase.security.User user) {
+    public int getPriority(org.apache.hadoop.hbase.shaded.protobuf.generated.RPCProtos.RequestHeader header, org.apache.hadoop.hbase.shaded.com.google.protobuf.Message param, org.apache.hadoop.hbase.security.User user) {
         return org.apache.hadoop.hbase.HConstants.NORMAL_QOS;
     }
 
     @Override
-    public long getDeadline(org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader header, com.google.protobuf.Message param) {
+    public long getDeadline(org.apache.hadoop.hbase.shaded.protobuf.generated.RPCProtos.RequestHeader header, org.apache.hadoop.hbase.shaded.com.google.protobuf.Message param) {
         return 0;
     }
 
@@ -183,18 +183,18 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
 
     @Override
-    public org.apache.hadoop.hbase.protobuf.generated.AdminProtos.UpdateConfigurationResponse updateConfiguration(
-            com.google.protobuf.RpcController controller,
-            org.apache.hadoop.hbase.protobuf.generated.AdminProtos.UpdateConfigurationRequest request)
-            throws com.google.protobuf.ServiceException {
+    public AdminProtos.UpdateConfigurationResponse updateConfiguration(
+            RpcController controller,
+            AdminProtos.UpdateConfigurationRequest request)
+            throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
   
     @Override
-    public org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WarmupRegionResponse warmupRegion(
-            com.google.protobuf.RpcController controller,
-            org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WarmupRegionRequest request)
-            throws com.google.protobuf.ServiceException {
+    public AdminProtos.WarmupRegionResponse warmupRegion(
+            RpcController controller,
+            AdminProtos.WarmupRegionRequest request)
+            throws ServiceException {
        throw new UnsupportedOperationException("Not implemented");
     }
 }
