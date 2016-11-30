@@ -197,4 +197,20 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
             throws ServiceException {
        throw new UnsupportedOperationException("Not implemented");
     }
+    
+    @Override
+    public AdminProtos.GetRegionLoadResponse getRegionLoad(
+            RpcController controller,
+            AdminProtos.GetRegionLoadRequest request) 
+            throws ServiceException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+    
+    @Override
+    public AdminProtos.CloseRegionForSplitResponse closeRegionForSplit(
+            RpcController controller,
+            AdminProtos.CloseRegionForSplitRequest request) 
+            throws ServiceException {
+      throw new UnsupportedOperationException("Not implemented");
+    }
 }
