@@ -42,6 +42,7 @@ import org.apache.lucene.misc.IndexMergeTool;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.solr.store.hdfs.HdfsDirectory;
+import org.apache.solr.update.SolrIndexWriter;
 import org.apache.solr.util.RTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,6 +166,11 @@ public class TreeMergeOutputFormat extends FileOutputFormat<Text, NullWritable> 
           context.getCounter(SolrCounters.class.getName(), SolrCounters.PHYSICAL_TREE_MERGE_TIME.toString()).increment((long) timer.getTime());
         }
         LOG.info("Optimizing Solr: done forcing tree merge down to {} segments in {}ms", maxSegments, timer.getTime());
+
+        // SOLR-9408
+        // Set Solr's commit data so the created index is usable by SolrCloud. E.g. Currently SolrCloud relies on
+        // commitTimeMSec in the commit data to do replication.
+        SolrIndexWriter.setCommitData(writer);
 
         timer = new RTimer();
         LOG.info("Optimizing Solr: Closing index writer");
