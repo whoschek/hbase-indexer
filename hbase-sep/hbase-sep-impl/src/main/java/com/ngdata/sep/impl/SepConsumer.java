@@ -128,7 +128,7 @@ public class SepConsumer extends BaseHRegionServer {
             throw new IllegalArgumentException("Failed resolve of " + initialIsa);
         }
         String name = "regionserver/" + initialIsa.toString();
-        this.rpcServer = new RpcServer(this, name, getServices(),
+        this.rpcServer = org.apache.hadoop.hbase.ipc.RpcServerFactory.createRpcServer(this, name, getServices(),
         /*HBaseRPCErrorHandler.class, OnlineRegions.class},*/
                 initialIsa, // BindAddress is IP we got for this server.
                 //hbaseConf.getInt("hbase.regionserver.handler.count", 10),
