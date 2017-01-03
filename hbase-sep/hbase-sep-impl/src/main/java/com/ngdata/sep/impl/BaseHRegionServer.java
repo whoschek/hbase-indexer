@@ -207,9 +207,9 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
     
     @Override
-    public AdminProtos.CloseRegionForSplitResponse closeRegionForSplit(
+    public AdminProtos.CloseRegionForSplitOrMergeResponse closeRegionForSplitOrMerge(
             RpcController controller,
-            AdminProtos.CloseRegionForSplitRequest request) 
+            AdminProtos.CloseRegionForSplitOrMergeRequest request) 
             throws ServiceException {
       throw new UnsupportedOperationException("Not implemented");
     }
