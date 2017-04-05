@@ -18,7 +18,7 @@ package com.ngdata.sep.impl;
 import java.io.IOException;
 
 import com.ngdata.sep.EventPublisher;
-import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 
 /**
@@ -26,7 +26,7 @@ import org.apache.hadoop.hbase.client.Put;
  */
 public class HBaseEventPublisher implements EventPublisher {
 
-    private final HTableInterface payloadTable;
+    private final Table payloadTable;
     private final byte[] payloadColumnFamily;
     private final byte[] payloadColumnQualifier;
 
@@ -37,7 +37,7 @@ public class HBaseEventPublisher implements EventPublisher {
      * @param payloadColumnFamily column family where payload data will be written
      * @param payloadColumnQualifier column qualifier under which payload data will be written
      */
-    public HBaseEventPublisher(HTableInterface payloadTable, byte[] payloadColumnFamily, byte[] payloadColumnQualifier) {
+    public HBaseEventPublisher(Table payloadTable, byte[] payloadColumnFamily, byte[] payloadColumnQualifier) {
         this.payloadTable = payloadTable;
         this.payloadColumnFamily = payloadColumnFamily;
         this.payloadColumnQualifier = payloadColumnQualifier;
@@ -50,7 +50,7 @@ public class HBaseEventPublisher implements EventPublisher {
         payloadTable.put(eventPut);
     }
     
-    protected HTableInterface getPayloadTable() {
+    protected Table getPayloadTable() {
         return this.payloadTable;
     }
 }
