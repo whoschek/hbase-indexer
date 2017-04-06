@@ -74,11 +74,6 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
 
     @Override
-    public AdminProtos.MergeRegionsResponse mergeRegions(RpcController rpcController, AdminProtos.MergeRegionsRequest mergeRegionsRequest) throws ServiceException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public AdminProtos.ReplicateWALEntryResponse replicateWALEntry(RpcController rpcController, AdminProtos.ReplicateWALEntryRequest replicateWALEntryRequest) throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
