@@ -37,11 +37,9 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.util.Strings;
 import org.apache.hadoop.net.DNS;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -134,18 +132,14 @@ public class Main {
     }
 
     private void startHttpServer() throws Exception {
-        server = new Server();
-        SelectChannelConnector selectChannelConnector = new SelectChannelConnector();
-        selectChannelConnector.setPort(11060);
-        server.setConnectors(new Connector[]{selectChannelConnector});
+        server = new Server(11060);
 
         PackagesResourceConfig packagesResourceConfig = new PackagesResourceConfig("com/ngdata/hbaseindexer/rest");
 
         ServletHolder servletHolder = new ServletHolder(new ServletContainer(packagesResourceConfig));
         servletHolder.setName("HBase-Indexer");
 
-
-        Context context = new Context(server, "/", Context.NO_SESSIONS);
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         context.addServlet(servletHolder, "/*");
         context.setContextPath("/");
         context.setAttribute("indexerModel", indexerModel);
