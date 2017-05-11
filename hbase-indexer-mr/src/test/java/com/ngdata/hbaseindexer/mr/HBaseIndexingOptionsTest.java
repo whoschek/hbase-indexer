@@ -41,6 +41,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -129,7 +130,7 @@ public class HBaseIndexingOptionsTest {
 
         HBaseAdmin hBaseAdmin = Mockito.mock(HBaseAdmin.class);
         Mockito.when(hBaseAdmin.listTables("record")).thenReturn(new HTableDescriptor[]{
-                new HTableDescriptor("record")
+                new HTableDescriptor(TableName.valueOf("record"))
         });
         opts.hBaseAdmin = hBaseAdmin;
     }

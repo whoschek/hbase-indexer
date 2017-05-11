@@ -208,4 +208,12 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
             throws ServiceException {
       throw new UnsupportedOperationException("Not implemented");
     }
+
+    @Override
+    public AdminProtos.ClearCompactionQueuesResponse clearCompactionQueues(RpcController controller,
+	    AdminProtos.ClearCompactionQueuesRequest request) throws ServiceException {
+      throw new UnsupportedOperationException("Not implemented");      
+    }
+    
+    
 }
