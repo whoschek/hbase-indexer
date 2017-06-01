@@ -215,5 +215,10 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
       throw new UnsupportedOperationException("Not implemented");      
     }
     
+    @Override
+    public AdminProtos.GetSpaceQuotaSnapshots getSpaceQuotaSnapshots(RpcController controller,
+        AdminProtos.GetSpaceQuotaSnapshotsRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
     
 }
