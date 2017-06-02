@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 
 /**
@@ -214,10 +215,10 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
 	    AdminProtos.ClearCompactionQueuesRequest request) throws ServiceException {
       throw new UnsupportedOperationException("Not implemented");      
     }
-    
+
     @Override
-    public AdminProtos.GetSpaceQuotaSnapshots getSpaceQuotaSnapshots(RpcController controller,
-        AdminProtos.GetSpaceQuotaSnapshotsRequest request) throws ServiceException {
+    public QuotaProtos.GetSpaceQuotaSnapshotsResponse getSpaceQuotaSnapshots(RpcController controller,
+        QuotaProtos.GetSpaceQuotaSnapshotsRequest request) throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
     
