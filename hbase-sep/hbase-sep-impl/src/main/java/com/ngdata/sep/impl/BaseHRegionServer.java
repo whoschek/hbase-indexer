@@ -203,14 +203,6 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
     
     @Override
-    public AdminProtos.CloseRegionForSplitOrMergeResponse closeRegionForSplitOrMerge(
-            RpcController controller,
-            AdminProtos.CloseRegionForSplitOrMergeRequest request) 
-            throws ServiceException {
-      throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public AdminProtos.ClearCompactionQueuesResponse clearCompactionQueues(RpcController controller,
 	    AdminProtos.ClearCompactionQueuesRequest request) throws ServiceException {
       throw new UnsupportedOperationException("Not implemented");      
@@ -221,5 +213,16 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
         QuotaProtos.GetSpaceQuotaSnapshotsRequest request) throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
-    
+
+    @Override
+    public AdminProtos.ExecuteProceduresResponse executeProcedures(RpcController controller,
+      AdminProtos.ExecuteProceduresRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public AdminProtos.MergeRegionsResponse mergeRegions(RpcController controller, 
+      AdminProtos.MergeRegionsRequest request) throws ServiceException {
+        throw new UnsupportedOperationException("Not implemented");
+    }
 }
