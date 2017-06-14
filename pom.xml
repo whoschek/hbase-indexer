@@ -19,7 +19,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <properties>
-    <version.solr>6.3.0</version.solr>
+    <version.solr>6.6.0</version.solr>
+    <version.solr.mapreduce>6.5.1</version.solr.mapreduce>
     <version.guava>11.0.2</version.guava>
     <version.joda-time>1.6</version.joda-time>
     <version.slf4j>1.7.5</version.slf4j>
@@ -254,7 +255,7 @@
       <dependency>
         <groupId>org.apache.solr</groupId>
         <artifactId>solr-map-reduce</artifactId>
-        <version>${version.solr}</version>
+        <version>${version.solr.mapreduce}</version>
         <exclusions>
           <exclusion>
             <groupId>org.ow2.asm</groupId>
