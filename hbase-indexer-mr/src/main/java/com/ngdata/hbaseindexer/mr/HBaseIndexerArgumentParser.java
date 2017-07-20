@@ -200,6 +200,10 @@ class HBaseIndexerArgumentParser {
                     + "If --solr-home-dir is not specified, the Solr home directory for the collection "
                     + "will be downloaded from this ZooKeeper ensemble."));
 
+        Argument useZkSolrConfig = solrClusterInfoGroup.addArgument("--use-zk-solrconfig.xml")
+                .action(Arguments.storeTrue())
+                .help(FeatureControl.SUPPRESS);
+   
         Argument shardUrlsArg = nonSolrCloud(solrClusterInfoGroup.addArgument("--shard-url")
                 .metavar("URL")
                 .type(String.class)
@@ -228,6 +232,20 @@ class HBaseIndexerArgumentParser {
         Argument collectionArg = goLiveGroup.addArgument("--collection")
                 .metavar("STRING")
                 .help("The SolrCloud collection to merge shards into when using --go-live and --zk-host. Example: collection1");
+
+        Argument goLiveMinReplicationFactorArg = goLiveGroup.addArgument("--go-live-min-replication-factor")
+                .metavar("INTEGER")
+                .type(Integer.class)
+                .choices(new RangeArgumentChoice(-1, Integer.MAX_VALUE))
+                .setDefault(-1)
+                .help("The minimum number of SolrCloud replicas to successfully merge any final index shard into. "
+                    + "The go-live job phase attempts to merge final index shards into all SolrCloud replicas. "
+                    + "Some of these merge operations may fail, for example if some SolrCloud servers are down. "
+                    + "This option enables indexing jobs to succeed even if some such merge operations fail on SolrCloud followers. "
+                    + "Successful merge operations into all leaders are always required for job success, "
+                    + "regardless of the value of --go-live-min-replication-factor. "
+                    + "-1 indicates require successful merge operations into all replicas. "
+                    + "1 indicates require successful merge operations only into leader replicas.");
 
         Argument goLiveThreadsArg = goLiveGroup.addArgument("--go-live-threads")
                 .metavar("INTEGER")
@@ -303,7 +321,29 @@ class HBaseIndexerArgumentParser {
                         "  --hbase-indexer-zk zk01 \\\n" +
                         "  --hbase-indexer-name docindexer \\\n" +
                         "  --go-live \\\n" +
-                        "  --log4j src/test/resources/log4j.properties\n\n"); 
+                        "  --log4j src/test/resources/log4j.properties\n\n" +
+
+                        "# MapReduce on Yarn - Pass custom JVM arguments\n" +
+                        "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \\\n" +
+                        "hadoop --config /etc/hadoop/conf \\\n" +
+                        "  jar hbase-indexer-mr-*-job.jar \\\n" +
+                        "  --conf /etc/hbase/conf/hbase-site.xml \\\n" +
+                        "  -D 'mapreduce.map.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \\\n" +
+                        "  -D 'mapreduce.reduce.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \\\n" +
+                        "  --hbase-indexer-zk zk01 \\\n" +
+                        "  --hbase-indexer-name docindexer \\\n" +
+                        "  --go-live \\\n" +
+                        "  --log4j src/test/resources/log4j.properties\n\n" +
+
+                        "# MapReduce on MR1 - Pass custom JVM arguments\n" +
+                        "HADOOP_CLIENT_OPTS='-DmaxConnectionsPerHost=10000 -DmaxConnections=10000'; \\\n" +
+                        "hadoop --config /etc/hadoop/conf \\\n" +
+                        "  jar hbase-indexer-mr-*-job.jar \\\n" +
+                        "  --conf /etc/hbase/conf/hbase-site.xml \\\n" +
+                        "  -D 'mapreduce.child.java.opts=-DmaxConnectionsPerHost=10000 -DmaxConnections=10000' \\\n" +
+                        "  --hbase-indexer-zk zk01 \\\n" + "  --hbase-indexer-name docindexer \\\n" +
+                        "  --go-live \\\n" +
+                        "  --log4j src/test/resources/log4j.properties\n\n");
 
                       throw new FoundHelpArgument(); // Trick to prevent processing of any remaining arguments
                     }
@@ -492,9 +532,11 @@ class HBaseIndexerArgumentParser {
         opts.isDryRun = ns.getBoolean(dryRunArg.getDest());
         opts.isVerbose = ns.getBoolean(verboseArg.getDest());
         opts.zkHost = ns.getString(zkHostArg.getDest());
+        opts.useZkSolrConfig = ns.getBoolean(useZkSolrConfig.getDest());
         opts.shards = ns.getInt(shardsArg.getDest());
         opts.shardUrls = HBaseMapReduceIndexerTool.buildShardUrls(ns.getList(shardUrlsArg.getDest()), opts.shards);
         opts.goLive = ns.getBoolean(goLiveArg.getDest());
+        opts.goLiveMinReplicationFactor = ns.getInt(goLiveMinReplicationFactorArg.getDest());
         opts.goLiveThreads = ns.getInt(goLiveThreadsArg.getDest());
         opts.collection = ns.getString(collectionArg.getDest());
         opts.clearIndex = ns.getBoolean(clearIndexArg.getDest());

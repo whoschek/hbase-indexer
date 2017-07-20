@@ -200,26 +200,32 @@ public class HBaseMapReduceIndexerTool extends Configured implements Tool {
                         hbaseIndexingOpts.maxSegments});
 
         if (hbaseIndexingOpts.isDirectWrite()) {
-            CloudSolrClient solrServer = new CloudSolrClient.Builder().withZkHost(hbaseIndexingOpts.zkHost).build();
+            String uniqueKeyField = indexerConf.getUniqueKeyField();
+            Preconditions.checkNotNull(uniqueKeyField);
+            CloudSolrClient solrServer = new CloudSolrClient(hbaseIndexingOpts.zkHost);
             int zkSessionTimeout = HBaseIndexerConfiguration.getSessionTimeout(conf);
             solrServer.setZkClientTimeout(zkSessionTimeout);
             solrServer.setZkConnectTimeout(zkSessionTimeout);
             solrServer.setDefaultCollection(hbaseIndexingOpts.collection);
+            solrServer.setIdField(uniqueKeyField);
 
-            if (hbaseIndexingOpts.clearIndex) {
-                clearSolr(indexingSpec.getIndexConnectionParams());
-            }
+            try {
+              if (hbaseIndexingOpts.clearIndex) {
+                  clearSolr(indexingSpec.getIndexConnectionParams(), uniqueKeyField);
+              }
 
-            // Run a mapper-only MR job that sends index documents directly to a live Solr instance.
-            job.setOutputFormatClass(NullOutputFormat.class);
-            job.setNumReduceTasks(0);
-            job.submit();
-            callback.jobStarted(job.getJobID().toString(), job.getTrackingURL());
-            if (!waitForCompletion(job, hbaseIndexingOpts.isVerbose)) {
-                return -1; // job failed
+              // Run a mapper-only MR job that sends index documents directly to a live Solr instance.
+              job.setOutputFormatClass(NullOutputFormat.class);
+              job.setNumReduceTasks(0);
+              job.submit();
+              callback.jobStarted(job.getJobID().toString(), job.getTrackingURL());
+              if (!waitForCompletion(job, hbaseIndexingOpts.isVerbose)) {
+                  return -1; // job failed
+              }
+              commitSolr(indexingSpec.getIndexConnectionParams(), uniqueKeyField);
+              goodbye(job, programStartTime);
+            } finally {
             }
-            commitSolr(indexingSpec.getIndexConnectionParams());
-            goodbye(job, programStartTime);
             return 0;
         } else {
             FileSystem fileSystem = FileSystem.get(getConf());
@@ -256,8 +262,8 @@ public class HBaseMapReduceIndexerTool extends Configured implements Tool {
         }
     }
 
-    private void clearSolr(Map<String, String> indexConnectionParams) throws SolrServerException, IOException {
-        Set<SolrClient> servers = createSolrClients(indexConnectionParams);
+    private void clearSolr(Map<String, String> indexConnectionParams, String uniqueKeyField) throws SolrServerException, IOException {
+        Set<SolrClient> servers = createSolrServers(indexConnectionParams, uniqueKeyField);
         for (SolrClient server : servers) {
             server.deleteByQuery("*:*");
             server.commit(false, false);
@@ -269,8 +275,8 @@ public class HBaseMapReduceIndexerTool extends Configured implements Tool {
         }
     }
 
-    private void commitSolr(Map<String, String> indexConnectionParams) throws SolrServerException, IOException {
-        Set<SolrClient> servers = createSolrClients(indexConnectionParams);
+    private void commitSolr(Map<String, String> indexConnectionParams, String uniqueKeyField) throws SolrServerException, IOException {
+        Set<SolrClient> servers = createSolrServers(indexConnectionParams, uniqueKeyField);
         for (SolrClient server : servers) {
             server.commit(false, false);
 			try {
@@ -281,7 +287,7 @@ public class HBaseMapReduceIndexerTool extends Configured implements Tool {
         }
     } 
 
-    private Set<SolrClient> createSolrClients(Map<String, String> indexConnectionParams) throws MalformedURLException {
+    private Set<SolrClient> createSolrServers(Map<String, String> indexConnectionParams, String uniqueKeyField) throws MalformedURLException {
         String solrMode = getSolrMode(indexConnectionParams);
         if (solrMode.equals("cloud")) {
             String indexZkHost = indexConnectionParams.get(SolrConnectionParams.ZOOKEEPER);
@@ -291,6 +297,7 @@ public class HBaseMapReduceIndexerTool extends Configured implements Tool {
             solrServer.setZkClientTimeout(zkSessionTimeout);
             solrServer.setZkConnectTimeout(zkSessionTimeout);
             solrServer.setDefaultCollection(collectionName);
+            solrServer.setIdField(uniqueKeyField);
             return Collections.singleton((SolrClient)solrServer);
         } else if (solrMode.equals("classic")) {
             PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager();

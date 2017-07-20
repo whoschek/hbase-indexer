@@ -16,16 +16,8 @@
  */
 package com.ngdata.hbaseindexer.mr;
 
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CloudSolrClient;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.apache.solr.client.solrj.request.CoreAdminRequest;
-import org.apache.solr.hadoop.MapReduceIndexerTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -34,42 +26,55 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.common.util.ExecutorUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The optional (parallel) GoLive phase merges the output shards of the previous
  * phase into a set of live customer facing Solr servers, typically a SolrCloud.
  */
 class GoLive {
+  
+  static final String INJECT_FOLLOWER_MERGE_FAILURES = "injectGoLiveFollowerFailures"; // for unit tests
 
-  private static final Logger LOG = LoggerFactory.getLogger(GoLive.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   
   // TODO: handle clusters with replicas
   public boolean goLive(HBaseIndexingOptions options, FileStatus[] outDirs) {
     LOG.info("Live merging of output shards into Solr cluster...");
     boolean success = false;
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     int concurrentMerges = options.goLiveThreads;
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(concurrentMerges,
+    ThreadPoolExecutor executor = new ExecutorUtil.MDCAwareThreadPoolExecutor(concurrentMerges,
         concurrentMerges, 1, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>());
     
     try {
-      CompletionService<Request> completionService = new ExecutorCompletionService<Request>(executor);
-      Set<Future<Request>> pending = new HashSet<Future<Request>>();
+      CompletionService<Request> completionService = new ExecutorCompletionService<>(executor);
+      Set<Future<Request>> pending = new HashSet<>();
       int cnt = -1;
       for (final FileStatus dir : outDirs) {
         
         LOG.debug("processing: " + dir.getPath());
 
         cnt++;
-        List<String> urls = options.shardUrls.get(cnt);
+        final List<String> urls = options.shardUrls.get(cnt);
+        final Shard shard = new Shard(urls, options.goLiveMinReplicationFactor);
+        LOG.info("Live merging of output shard {} into at least {} out of {} replicas of {}", 
+            dir.getPath(), shard.minMergeSuccessesRequired, urls.size(), urls);
         
-        for (String url : urls) {
+        for (final String url : urls) {
           
           String baseUrl = url;
           if (baseUrl.endsWith("/")) {
@@ -87,34 +92,27 @@ class GoLive {
           final String mergeUrl = baseUrl;
           
           Callable<Request> task = new Callable<Request>() {
-            @Override
-            public Request call() {
-              Request req = new Request();
-              LOG.info("Live merge " + dir.getPath() + " into " + mergeUrl);
-              final HttpSolrClient server = new HttpSolrClient.Builder(mergeUrl).build();
-              try {
-                CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
-                mergeRequest.setCoreName(name);
-                mergeRequest.setIndexDirs(Arrays.asList(dir.getPath().toString() + "/data/index"));
-                try {
-                  mergeRequest.process(server);
-                  req.success = true;
-                } catch (SolrServerException e) {
-                  req.e = e;
-                  return req;
-                } catch (IOException e) {
-                  req.e = e;
-                  return req;
-                }
-              } finally {
-				try {
-					server.close();
-				} catch (java.io.IOException e) {
-				   throw new RuntimeException(e);
-				}
+           @Override
+           public Request call() {
+            Request req = new Request();
+            req.url = url;
+            req.isLeader = urls.indexOf(url) == 0;
+            req.shard = shard;
+            LOG.info("Live merge " + dir.getPath() + " into " + mergeUrl);
+            try (final HttpSolrClient client = new HttpSolrClient.Builder(mergeUrl).build()) {
+              CoreAdminRequest.MergeIndexes mergeRequest = new CoreAdminRequest.MergeIndexes();
+              mergeRequest.setCoreName(name);
+              mergeRequest.setIndexDirs(Arrays.asList(dir.getPath().toString() + "/data/index"));
+              if (!req.isLeader && System.getProperty(INJECT_FOLLOWER_MERGE_FAILURES) != null) {
+                throw new SolrServerException(INJECT_FOLLOWER_MERGE_FAILURES);
               }
-              return req;
+              mergeRequest.process(client);
+              req.success = true;
+            } catch (SolrServerException | IOException e) {
+              req.e = e;
             }
+            return req;
+           }
           };
           pending.add(completionService.submit(task));
         }
@@ -128,11 +126,21 @@ class GoLive {
           
           try {
             Request req = future.get();
-            
-            if (!req.success) {
-              // failed
-              LOG.error("A live merge command failed", req.e);
-              return false;
+            req.shard.numMergeRequestsTodo--;
+            if (req.success) {
+              req.shard.minMergeSuccessesRequired--;
+              assert req.shard.numMergeRequestsTodo >= req.shard.minMergeSuccessesRequired;
+            } else { // merge request failed
+              if (req.isLeader || 
+                  req.shard.numMergeRequestsTodo < req.shard.minMergeSuccessesRequired) { 
+                String kind = req.isLeader ? "leader" : "follower";
+                LOG.error("A required live merge command failed on " + kind + " " + req.url, req.e);
+                return false;
+              }
+              LOG.warn("A live merge command failed on follower " + req.url 
+                  + " but it is still possible that a merge command on sufficiently "
+                  + "many other followers will succeed so we're happily continuing "
+                  + "despite the following exception", req.e);
             }
             
           } catch (ExecutionException e) {
@@ -153,17 +161,17 @@ class GoLive {
       try {
         LOG.info("Committing live merge...");
         if (options.zkHost != null) {
-          CloudSolrClient server = new CloudSolrClient.Builder().withZkHost(options.zkHost).build();
-          server.setDefaultCollection(options.collection);
-          server.commit();
-          server.close();
+          try (CloudSolrClient server = new CloudSolrClient.Builder().withZkHost(options.zkHost).build()) {
+            server.setDefaultCollection(options.collection);
+            server.commit();
+          }
         } else {
           for (List<String> urls : options.shardUrls) {
             for (String url : urls) {
               // TODO: we should do these concurrently
-              HttpSolrClient server = new HttpSolrClient.Builder(url).build();
-              server.commit();
-              server.close();
+              try (HttpSolrClient server = new HttpSolrClient.Builder(url).build()) {
+                server.commit();
+              }
             }
           }
         }
@@ -176,8 +184,8 @@ class GoLive {
       success = true;
       return true;
     } finally {
-      shutdownNowAndAwaitTermination(executor);
-      float secs = (System.currentTimeMillis() - start) / 1000.0f;
+      ExecutorUtil.shutdownAndAwaitTermination(executor);
+      float secs = (System.nanoTime() - start) / (float)(1.0e9);
       LOG.info("Live merging of index shards into Solr cluster took " + secs + " secs");
       if (success) {
         LOG.info("Live merging completed successfully");
@@ -188,29 +196,28 @@ class GoLive {
     
     // if an output dir does not exist, we should fail and do no merge?
   }
-
-  private void shutdownNowAndAwaitTermination(ExecutorService pool) {
-    pool.shutdown(); // Disable new tasks from being submitted
-    pool.shutdownNow(); // Cancel currently executing tasks
-    boolean shutdown = false;
-    while (!shutdown) {
-      try {
-        // Wait a while for existing tasks to terminate
-        shutdown = pool.awaitTermination(5, TimeUnit.SECONDS);
-      } catch (InterruptedException ie) {
-        // Preserve interrupt status
-        Thread.currentThread().interrupt();
-      }
-      if (!shutdown) {
-        pool.shutdownNow(); // Cancel currently executing tasks
-      }
-    }
-  }
-  
   
   private static final class Request {
     Exception e;
     boolean success = false;
+    boolean isLeader = true;
+    String url;
+    Shard shard;
   }
 
+  
+  private static final class Shard {
+    
+    int numMergeRequestsTodo;
+    int minMergeSuccessesRequired;
+    
+    public Shard(List<String> urls, int minReplicationFactor) {
+      numMergeRequestsTodo = urls.size();
+      if (minReplicationFactor == -1) {
+        minReplicationFactor = urls.size();
+      }
+      minReplicationFactor = Math.min(minReplicationFactor, urls.size());
+      minMergeSuccessesRequired = minReplicationFactor;
+    }
+  }
 }

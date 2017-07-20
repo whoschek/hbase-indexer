@@ -79,7 +79,9 @@ class HBaseIndexingOptions {
     boolean goLive;
     String collection;
     String zkHost;
+    boolean useZkSolrConfig;
     Integer goLiveThreads;
+    Integer goLiveMinReplicationFactor;
     List<List<String>> shardUrls;
     Path outputDir;
     int reducers;
