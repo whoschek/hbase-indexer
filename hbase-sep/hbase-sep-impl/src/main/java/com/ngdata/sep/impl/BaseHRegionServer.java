@@ -65,11 +65,6 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     }
 
     @Override
-    public AdminProtos.SplitRegionResponse splitRegion(RpcController rpcController, AdminProtos.SplitRegionRequest splitRegionRequest) throws ServiceException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
     public AdminProtos.CompactRegionResponse compactRegion(RpcController rpcController, AdminProtos.CompactRegionRequest compactRegionRequest) throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
@@ -217,12 +212,6 @@ public class BaseHRegionServer implements AdminProtos.AdminService.BlockingInter
     @Override
     public AdminProtos.ExecuteProceduresResponse executeProcedures(RpcController controller,
       AdminProtos.ExecuteProceduresRequest request) throws ServiceException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public AdminProtos.MergeRegionsResponse mergeRegions(RpcController controller, 
-      AdminProtos.MergeRegionsRequest request) throws ServiceException {
         throw new UnsupportedOperationException("Not implemented");
     }
 }
