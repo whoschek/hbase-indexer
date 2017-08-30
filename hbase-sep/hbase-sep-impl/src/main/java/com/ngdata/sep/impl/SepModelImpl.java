@@ -16,19 +16,22 @@
 package com.ngdata.sep.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.ngdata.sep.util.zookeeper.ZkUtil;
 import com.ngdata.sep.util.zookeeper.ZooKeeperItf;
 
 import com.ngdata.sep.util.io.Closer;
-
 import com.ngdata.sep.SepModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
+import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 
@@ -74,11 +77,13 @@ public class SepModelImpl implements SepModel {
 
     @Override
     public boolean addSubscriptionSilent(String name) throws InterruptedException, KeeperException, IOException {
-        ReplicationAdmin replicationAdmin = new ReplicationAdmin(hbaseConf);
+        Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
         try {
             String internalName = toInternalSubscriptionName(name);
-            if (replicationAdmin.listPeerConfigs().containsKey(internalName)) {
-                return false;
+            for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
+                if (internalName.equals(peer.getPeerId())) {
+                    return false;
+                }
             }
 
             String basePath = baseZkPath + "/" + internalName;
@@ -88,7 +93,7 @@ public class SepModelImpl implements SepModel {
 
 
             try {
-                replicationAdmin.addPeer(internalName, new ReplicationPeerConfig().setClusterKey(zkQuorumString + ":" + zkClientPort + ":" + basePath));
+                admin.addReplicationPeer(internalName, new ReplicationPeerConfig().setClusterKey(zkQuorumString + ":" + zkClientPort + ":" + basePath));
             } catch (IllegalArgumentException e) {
                 if (e.getMessage().equals("Cannot add existing peer")) {
                     return false;
@@ -107,7 +112,8 @@ public class SepModelImpl implements SepModel {
 
             return true;
         } finally {
-            Closer.close(replicationAdmin);
+            Closer.close(admin.getConnection());
+            Closer.close(admin);
         }
     }
 
@@ -120,15 +126,19 @@ public class SepModelImpl implements SepModel {
 
     @Override
     public boolean removeSubscriptionSilent(String name) throws IOException {
-        ReplicationAdmin replicationAdmin = new ReplicationAdmin(hbaseConf);
+        Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
         try {
             String internalName = toInternalSubscriptionName(name);
-            if (!replicationAdmin.listPeerConfigs().containsKey(internalName)) {
+            List<String> peerIds = new ArrayList<String>();
+            for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
+                peerIds.add(peer.getPeerId());
+            }
+            if (!peerIds.contains(internalName)) {
                 log.error("Requested to remove a subscription which does not exist, skipping silently: '" + name + "'");
                 return false;
             } else {
                 try {
-                    replicationAdmin.removePeer(internalName);
+                    admin.removeReplicationPeer(internalName);
                 } catch (IllegalArgumentException e) {
                     if (e.getMessage().equals("Cannot remove inexisting peer")) { // see ReplicationZookeeper
                         return false;
@@ -155,18 +165,25 @@ public class SepModelImpl implements SepModel {
             }
             return true;
         } finally {
-            Closer.close(replicationAdmin);
+            Closer.close(admin.getConnection());
+            Closer.close(admin);
         }
     }
 
     @Override
     public boolean hasSubscription(String name) throws IOException {
-        ReplicationAdmin replicationAdmin = new ReplicationAdmin(hbaseConf);
+        Admin admin = ConnectionFactory.createConnection(hbaseConf).getAdmin();
         try {
             String internalName = toInternalSubscriptionName(name);
-            return replicationAdmin.listPeerConfigs().containsKey(internalName);
+            for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
+                if (internalName.equals(peer.getPeerId())) {
+                    return true;
+                }
+            }
+            return false;
         } finally {
-            Closer.close(replicationAdmin);
+            Closer.close(admin.getConnection());
+            Closer.close(admin);
         }
     }
     

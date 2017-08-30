@@ -43,7 +43,7 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.client.replication.ReplicationAdmin;
+import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
@@ -170,19 +170,17 @@ public class IndexerIT {
             // Delete all hbase tables
             System.out.println(">>> Deleting all HBase tables");
             Admin admin = connection.getAdmin();
-            for (HTableDescriptor table : admin.listTables()) {
-                admin.disableTable(table.getTableName());
-                admin.deleteTable(table.getTableName());
+            for (TableName tableName : admin.listTableNames()) {
+                admin.disableTable(tableName);
+                admin.deleteTable(tableName);
             }
-            admin.close();
 
             // Delete all replication peers
             System.out.println(">>> Deleting all replication peers from HBase");
-            ReplicationAdmin replAdmin = new ReplicationAdmin(conf);
-            for (String peerId : replAdmin.listPeerConfigs().keySet()) {
-                replAdmin.removePeer(peerId);
+            for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
+              admin.removeReplicationPeer(peer.getPeerId());
             }
-            replAdmin.close();
+            admin.close();
             SepTestUtil.waitOnAllReplicationPeersStopped();
 
             // Clear Solr indexes
