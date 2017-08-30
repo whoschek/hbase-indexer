@@ -728,6 +728,21 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${version.surefire.plugin}</version>
+          <configuration>
+            <systemPropertyVariables>
+              <!--Since hbase2.0.0-alpha2: For shaded netty, to find the relocated .so.
+                   Trick from
+                https://stackoverflow.com/questions/33825743/rename-files-inside-a-jar-using-some-maven-plugin
+
+                The netty jar has a .so in it. Shading requires rename of the .so and then passing a system
+                property so netty finds the renamed .so and associates it w/ the relocated netty files.
+
+                The relocated netty is in hbase-thirdparty dependency. Just set this propery globally rather
+                than per module.
+               -->
+              <org.apache.hadoop.hbase.shaded.io.netty.packagePrefix>org.apache.hadoop.hbase.shaded.</org.apache.hadoop.hbase.shaded.io.netty.packagePrefix>
+            </systemPropertyVariables>
+          </configuration>
         </plugin>
 
         <!-- We put slow-running tests into src/it and run them during the
@@ -776,6 +791,19 @@
             <reuseForks>false</reuseForks>
             <argLine>-Xmx768m -XX:MaxPermSize=128M</argLine>
             <testSourceDirectory>${basedir}/src/it/java</testSourceDirectory>
+            <systemPropertyVariables>
+              <!--Since hbase2.0.0-alpha2: For shaded netty, to find the relocated .so.
+                   Trick from
+                https://stackoverflow.com/questions/33825743/rename-files-inside-a-jar-using-some-maven-plugin
+
+                The netty jar has a .so in it. Shading requires rename of the .so and then passing a system
+                property so netty finds the renamed .so and associates it w/ the relocated netty files.
+
+                The relocated netty is in hbase-thirdparty dependency. Just set this propery globally rather
+                than per module.
+               -->
+              <org.apache.hadoop.hbase.shaded.io.netty.packagePrefix>org.apache.hadoop.hbase.shaded.</org.apache.hadoop.hbase.shaded.io.netty.packagePrefix>
+            </systemPropertyVariables>
           </configuration>
           <executions>
             <execution>

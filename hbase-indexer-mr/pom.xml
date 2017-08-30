@@ -263,6 +263,18 @@
           </environmentVariables>
           <systemPropertyVariables>
             <log4j.configuration>file:${project.build.testOutputDirectory}/log4j.properties</log4j.configuration>
+            
+            <!--Since hbase2.0.0-alpha2: For shaded netty, to find the relocated .so.
+                   Trick from
+                https://stackoverflow.com/questions/33825743/rename-files-inside-a-jar-using-some-maven-plugin
+
+                The netty jar has a .so in it. Shading requires rename of the .so and then passing a system
+                property so netty finds the renamed .so and associates it w/ the relocated netty files.
+
+                The relocated netty is in hbase-thirdparty dependency. Just set this propery globally rather
+                than per module.
+             -->
+            <org.apache.hadoop.hbase.shaded.io.netty.packagePrefix>org.apache.hadoop.hbase.shaded.</org.apache.hadoop.hbase.shaded.io.netty.packagePrefix>
           </systemPropertyVariables>
         </configuration>
       </plugin>
